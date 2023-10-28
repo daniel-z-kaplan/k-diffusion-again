@@ -18,8 +18,8 @@
         "dropout_rate": 0.0,
         "augment_prob": 0.0,
         
-        "activation_function", "GELU",
-        "positional_embedding", "additive",
+        "up_proj_act": "GELU",
+        "pos_emb_type": "additive",
         
         "sigma_data": 0.5,
         "sigma_min": 1e-2,
