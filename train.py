@@ -240,15 +240,16 @@ def main():
 
     inner_model, inner_model_ema, opt, train_dl = accelerator.prepare(inner_model, inner_model_ema, opt, train_dl)
 
-    with torch.no_grad(), K.models.flops.flop_counter() as fc:
+    # with torch.no_grad(), K.models.flops.flop_counter() as fc:
+    with torch.no_grad():
         x = torch.zeros([1, model_config['input_channels'], size[0], size[1]], device=device)
         sigma = torch.ones([1], device=device)
         extra_args = {}
         if getattr(unwrap(inner_model), "num_classes", 0):
             extra_args['class_cond'] = torch.zeros([1], dtype=torch.long, device=device)
         inner_model(x, sigma, **extra_args)
-        if accelerator.is_main_process:
-            print(f"Forward pass GFLOPs: {fc.flops / 1_000_000_000:,.3f}", flush=True)
+        # if accelerator.is_main_process:
+        #     print(f"Forward pass GFLOPs: {fc.flops / 1_000_000_000:,.3f}", flush=True)
 
     if use_wandb:
         wandb.watch(inner_model)

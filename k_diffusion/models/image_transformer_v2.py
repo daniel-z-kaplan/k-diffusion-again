@@ -12,7 +12,7 @@ import torch._dynamo
 from torch.nn import functional as F
 import numpy as np
 
-from . import flags, flops
+from . import flags #, flops
 from .. import layers
 from .axial_rope import make_axial_pos
 
@@ -126,13 +126,13 @@ def scale_for_cosine_sim_qkv(qkv, scale, eps):
 
 class Linear(nn.Linear):
     def forward(self, x):
-        flops.op(flops.op_linear, x.shape, self.weight.shape)
+        # flops.op(# flops.op_linear, x.shape, self.weight.shape)
         return super().forward(x)
 
 
 class LinearGELU(nn.Linear):
     def forward(self, x):
-        flops.op(flops.op_linear, x.shape, self.weight.shape)
+        # flops.op(# flops.op_linear, x.shape, self.weight.shape)
         return F.gelu(super().forward(x))
 
 
@@ -142,7 +142,7 @@ class LinearGEGLU(nn.Linear):
         self.out_features = out_features
 
     def forward(self, x):
-        flops.op(flops.op_linear, x.shape, self.weight.shape)
+        # flops.op(# flops.op_linear, x.shape, self.weight.shape)
         return linear_geglu(x, self.weight, self.bias)
 
 
@@ -380,7 +380,7 @@ def apply_window_attention(window_size, window_shift, q, k, v, scale=None):
     mask = torch.reshape(mask, (h, w, wh * ww, wh * ww))
 
     # do the attention here
-    flops.op(flops.op_attention, q_seqs.shape, k_seqs.shape, v_seqs.shape)
+    # flops.op(# flops.op_attention, q_seqs.shape, k_seqs.shape, v_seqs.shape)
     qkv = F.scaled_dot_product_attention(q_seqs, k_seqs, v_seqs, mask, scale=scale)
 
     # unwindow
@@ -434,7 +434,7 @@ class SelfAttentionBlock(nn.Module):
                 theta = torch.stack((theta, theta, torch.zeros_like(theta)), dim=-3)
                 qkv = apply_rotary_emb_(qkv, theta)
             flops_shape = qkv.shape[-5], qkv.shape[-2], qkv.shape[-4], qkv.shape[-1]
-            flops.op(flops.op_attention, flops_shape, flops_shape, flops_shape)
+            # flops.op(# flops.op_attention, flops_shape, flops_shape, flops_shape)
             x = flash_attn.flash_attn_qkvpacked_func(qkv, softmax_scale=1.0)
             x = rearrange(x, "n (h w) nh e -> n h w (nh e)", h=skip.shape[-3], w=skip.shape[-2])
         else:
@@ -444,7 +444,7 @@ class SelfAttentionBlock(nn.Module):
                 theta = theta.movedim(-2, -3)
                 q = apply_rotary_emb_(q, theta)
                 k = apply_rotary_emb_(k, theta)
-            flops.op(flops.op_attention, q.shape, k.shape, v.shape)
+            # flops.op(# flops.op_attention, q.shape, k.shape, v.shape)
             x = F.scaled_dot_product_attention(q, k, v, scale=1.0)
             x = rearrange(x, "n nh (h w) e -> n h w (nh e)", h=skip.shape[-3], w=skip.shape[-2])
         x = self.dropout(x)
@@ -482,7 +482,7 @@ class NeighborhoodSelfAttentionBlock(nn.Module):
             k = apply_rotary_emb_(k, theta)
         if natten is None:
             raise ModuleNotFoundError("natten is required for neighborhood attention")
-        flops.op(flops.op_natten, q.shape, k.shape, v.shape, self.kernel_size)
+        # flops.op(# flops.op_natten, q.shape, k.shape, v.shape, self.kernel_size)
         qk = natten.functional.natten2dqk(q, k, self.kernel_size, 1)
         a = torch.softmax(qk, dim=-1)
         x = natten.functional.natten2dav(a, v, self.kernel_size, 1)
