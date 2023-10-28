@@ -461,6 +461,8 @@ class FeedForwardBlock(nn.Module):
     def __init__(self, d_model, d_ff, cond_features, dropout=0.0):
         super().__init__()
         self.norm = AdaRMSNorm(d_model, cond_features)
+        
+        #TODO swap here
         self.up_proj = apply_wd(LinearGEGLU(d_model, d_ff, bias=False))
         self.dropout = nn.Dropout(dropout)
         self.down_proj = apply_wd(zero_init(Linear(d_ff, d_model, bias=False)))
@@ -534,6 +536,8 @@ class MappingFeedForwardBlock(nn.Module):
     def __init__(self, d_model, d_ff, dropout=0.0):
         super().__init__()
         self.norm = RMSNorm(d_model)
+        
+        #TODO swap here
         self.up_proj = apply_wd(LinearGEGLU(d_model, d_ff, bias=False))
         self.dropout = nn.Dropout(dropout)
         self.down_proj = apply_wd(zero_init(Linear(d_ff, d_model, bias=False)))
@@ -646,7 +650,7 @@ class MappingSpec:
 # Model class
 
 class ImageTransformerDenoiserModelV2(nn.Module):
-    def __init__(self, levels, mapping, in_channels, out_channels, patch_size, num_classes=0, mapping_cond_dim=0):
+    def __init__(self, levels, mapping, in_channels, out_channels, patch_size, num_classes=0, mapping_cond_dim=0, activation_function = "GELU", positional_embedding = "ROPE"):
         super().__init__()
         self.num_classes = num_classes
 
@@ -660,6 +664,10 @@ class ImageTransformerDenoiserModelV2(nn.Module):
         self.mapping_cond_in_proj = Linear(mapping_cond_dim, mapping.width, bias=False) if mapping_cond_dim else None
         self.mapping = tag_module(MappingNetwork(mapping.depth, mapping.width, mapping.d_ff, dropout=mapping.dropout), "mapping")
 
+        self.activation_function = activation_function
+        self.positional_embedding = positional_embedding
+        
+        
         self.down_levels, self.up_levels = nn.ModuleList(), nn.ModuleList()
         for i, spec in enumerate(levels):
             if isinstance(spec.self_attn, GlobalAttentionSpec):

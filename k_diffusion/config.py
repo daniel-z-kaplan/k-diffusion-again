@@ -207,6 +207,8 @@ def make_model(config):
             patch_size=config['patch_size'],
             num_classes=num_classes + 1 if num_classes else 0,
             mapping_cond_dim=config['mapping_cond_dim'],
+            activation_function = config["activation_function"],
+            positional_embedding = config["positional_embedding"]
         )
     else:
         raise ValueError(f'unsupported model type {config["type"]}')
