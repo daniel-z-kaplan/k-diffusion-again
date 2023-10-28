@@ -208,7 +208,8 @@ def make_model(config):
             num_classes=num_classes + 1 if num_classes else 0,
             mapping_cond_dim=config['mapping_cond_dim'],
             up_proj_act = config["up_proj_act"],
-            pos_emb_type = config["pos_emb_type"]
+            pos_emb_type = config["pos_emb_type"],
+            input_size=config['input_size'],
         )
     else:
         raise ValueError(f'unsupported model type {config["type"]}')
